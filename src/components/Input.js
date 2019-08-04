@@ -1,9 +1,10 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import useDropdownClose from "../hooks/useDropdownClose";
 import useSearch from "../hooks/useSearch";
 
 const Input = () => {
   const [isActive, setIsActive] = useState(false);
+  const [focusIndex, setFocusIndex] = useState(null);
   const dropdownRef = useRef();
 
   useDropdownClose(isActive, setIsActive);
@@ -22,6 +23,24 @@ const Input = () => {
     />
   );
 
+  const handleNavigation = e => {
+    if (e.keyCode === 40) {
+      setFocusIndex(index =>
+        index === null || index === data.length - 1 ? 0 : index + 1
+      );
+    }
+
+    if (e.keyCode === 38) {
+      setFocusIndex(index =>
+        index === null || index === 0 ? data.length - 1 : index - 1
+      );
+    }
+  };
+
+  useEffect(() => {
+    console.log(focusIndex);
+  }, [focusIndex]);
+
   console.log(data);
   return (
     <div className="search-wrapper" onClick={() => setIsActive(!isActive)}>
@@ -34,6 +53,7 @@ const Input = () => {
           placeholder="Search by ID, Address, Name...."
           value={searchString}
           onChange={e => setSearchString(e.target.value)}
+          onKeyDown={handleNavigation}
         />
         <button className="close-icon" onClick={() => setSearchString("")} />
       </div>
@@ -41,7 +61,11 @@ const Input = () => {
         <div className="dropdown" ref={dropdownRef}>
           {data.length > 0 ? (
             data.map((d, i) => (
-              <div key={`data.id_${String(i)}`} className="dropdown-item">
+              <div
+                key={`data.id_${String(i)}`}
+                className={`dropdown-item ${i === focusIndex ? "focused" : ""}`}
+                onMouseEnter={() => setFocusIndex(i)}
+              >
                 <div className="id">{highlighter(d.id, searchString)}</div>
                 {d.items.includes(searchString) && (
                   <div className="item">

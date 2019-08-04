@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
-import PropTypes from "prop-types";
 import useDropdownClose from "../hooks/useDropdownClose";
+import useSearch from "../hooks/useSearch";
 
 const Input = () => {
   const [isActive, setIsActive] = useState(false);
@@ -8,6 +8,21 @@ const Input = () => {
 
   useDropdownClose(isActive, setIsActive);
 
+  const { data = [], searchString, setSearchString } = useSearch();
+
+  const highlighter = (item, searchStrig) => (
+    <span
+      className="non-match"
+      dangerouslySetInnerHTML={{
+        __html: item.replace(
+          new RegExp(searchString ? searchString : " ", "gi"),
+          match => `<span class="match">${match}</span>`
+        )
+      }}
+    />
+  );
+
+  console.log(data);
   return (
     <div className="search-wrapper" onClick={() => setIsActive(!isActive)}>
       <div>
@@ -17,36 +32,41 @@ const Input = () => {
           required
           className="search-box"
           placeholder="Search by ID, Address, Name...."
+          value={searchString}
+          onChange={e => setSearchString(e.target.value)}
         />
-        <button className="close-icon" />
+        <button className="close-icon" onClick={() => setSearchString("")} />
       </div>
       {isActive && (
-        <div class="dropdown" ref={dropdownRef}>
-          <div className="dropdown-item">
-            <div className="id">
-              <span className="match">{"123"}</span>
-              <span className="non-match">{"-s2-546"}</span>
-            </div>
-            <div className="item">
-              <div />
-              "bucket" found in Items.
-            </div>
-            <div className="name">
-              <span className="match">{"John "}</span>
-              <span className="non-match">{"Jacobs"}</span>
-            </div>
-            <div className="address">
-              <span className="match">{"1st Cross, 9th Main, "}</span>
-              <span className="non-match">{`abc Apartment, 2nd Cross, BTI Apartment, 2nd
-              Cross, BTI Apartment`}</span>
-            </div>
-          </div>
+        <div className="dropdown" ref={dropdownRef}>
+          {data.length > 0 ? (
+            data.map((d, i) => (
+              <div key={`data.id_${String(i)}`} className="dropdown-item">
+                <div className="id">{highlighter(d.id, searchString)}</div>
+                {d.items.includes(searchString) && (
+                  <div className="item">
+                    <div />"{searchString}" found in Items.
+                  </div>
+                )}
+                <div className="name">
+                  <span className="non-match">
+                    {highlighter(d.name, searchString)}
+                  </span>
+                </div>
+                <div className="address">
+                  <span className="non-match">
+                    {highlighter(d.address, searchString)}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="dropdown-item">No Results Found</div>
+          )}
         </div>
       )}
     </div>
   );
 };
-
-Input.propTypes = {};
 
 export default Input;
